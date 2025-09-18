@@ -19,7 +19,7 @@
 				grid-auto-flow: column;
 			}
 			.board-square {
-				margin: 2px;
+				margin: 1px;
 				background-color: #dde;
 				line-height: 1;
 				position: relative;
@@ -28,7 +28,7 @@
 				background-color: #acf;
 			}
 			.board-square.triple-letter {
-				background-color: #99f;
+				background-color: #afc;
 			}
 			.board-square.double-word {
 				background-color: #fac;
@@ -54,7 +54,7 @@
 				font-weight: normal;
 			}
 			.highlight {
-				border: 4px solid #ff0;
+				border: 4px solid rgba(60,60,60,0.6);
 				width: calc(100% - 8px);
 				height: calc(100% - 8px);
 				position: absolute;
@@ -66,8 +66,14 @@
 			.highlight.nothing {
 				border: 4px solid #f00;
 			}
-			.highlight.selected {
+			#board .highlight.selected {
 				border: 4px solid #00f;
+			}
+			.highlight.all-correct {
+				border: 4px solid #0a0;
+			}
+			.highlight.some-mistakes {
+				border: 4px solid #f80;
 			}
 			.possibilities {
 				word-break: break-all;
@@ -154,7 +160,7 @@
 				color: #800;
 			}
 			.solution-letter.correct {
-				color: #040;
+				color: #060;
 			}
 			.solution-letter.missed {
 				color: #00a;
@@ -186,7 +192,7 @@
 			<option value="nwl23">🇨🇦🇺🇸NWL23</option>
 			<option value="csw24">🇬🇧 CSW24</option>
 		</select></label>
-		<label><input type="checkbox" id="skip-2s" checked> Skip 2’s</label>
+		<label><input type="checkbox" id="skip-2s"> Skip 2’s</label>
 		<label><input type="checkbox" id="skip-3s"> Skip 3’s</label>
 		<button id="submit">All done!</button>
 		<div id="board"></div>

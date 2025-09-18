@@ -1,11 +1,18 @@
 'use strict';
 
+/*
+TODO:
+- clear solution
+*/
+
 const N = 15; // board size
 
 const NOTHING = "∅";
 const EMAIL = 'pommicket' + '@pommicket.com';
 
-let lexicon = new URL(location.href).searchParams.get('lexicon') || 'nwl23';
+let lexicon = new URL(location.href).searchParams.get('lexicon')
+	|| localStorage.getItem('prevLexicon') || 'nwl23';
+localStorage.setItem('prevLexicon', lexicon);
 
 function updateBoardSize() {
 	let boardElem = document.getElementById('board');
@@ -57,12 +64,42 @@ function pointValue(letter) {
 }
 
 let boardSquareElems = [];
-let currSolution = [];
+let currAttempt = [];
 let board = [];
 let trueSolution = [];
-let skipWordsOfLength = 2;
+let skipWordsOfLength = parseInt(localStorage.getItem(`skip-${lexicon}`)) || 2;
 let alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 let finished = false;
+let challengeId;
+
+function loadAttempt() {
+	let saveDataStr = localStorage.getItem(`attempt-${lexicon}`);
+	if (!saveDataStr) return null;
+	let saveData = JSON.parse(saveDataStr);
+	if (saveData.id !== challengeId) {
+		// old data
+		return;
+	}
+	for (let row = 0; row < 15; row++) {
+		for (let col = 0; col < 15; col++) {
+			for (let letter of saveData.solution[row][col]) {
+				addToSolution(row, col, letter);
+			}
+		}
+	}
+	if (saveData.finished)
+		showSolution();
+}
+
+function saveAttempt() {
+	let saveData = {
+		version: 1,
+		id: challengeId,
+		solution: currAttempt,
+		finished: finished,
+	};
+	localStorage.setItem(`attempt-${lexicon}`, JSON.stringify(saveData));
+}
 
 function getFontSizeForPossibilities(n) {
 	return (n === 1 ? 100
@@ -85,18 +122,19 @@ function updatePossibilities(highlightElem, letters) {
 function addToSolution(row, col, letter) {
 	let highlight = document.querySelector(`.highlight[data-row="${row}"][data-col="${col}"]`);
 	if (letter === NOTHING) {
-		currSolution[row][col] = [];
+		currAttempt[row][col] = [];
 		highlight.classList.add('nothing');
 		updatePossibilities(highlight, []);
 		deselectTile();
 		return;
 	}
-	let letters = currSolution[row][col];
+	let letters = currAttempt[row][col];
 	if (letters.indexOf(letter) !== -1) return;
 	letters.push(letter);
 	letters.sort();
 	highlight.classList.remove('nothing');
 	updatePossibilities(highlight, letters);
+	saveAttempt();
 }
 
 function removeFromSolution(row, col, letter) {
@@ -105,15 +143,16 @@ function removeFromSolution(row, col, letter) {
 		highlight.classList.remove('nothing');
 		return;
 	}
-	let letters = currSolution[row][col];
+	let letters = currAttempt[row][col];
 	let idx = letters.indexOf(letter);
 	if (idx === -1) return;
 	letters.splice(idx, 1);
 	updatePossibilities(highlight, letters);
+	saveAttempt();
 }
 
 function toggleInSolution(row, col, letter) {
-	let letters = currSolution[row][col];
+	let letters = currAttempt[row][col];
 	let idx = letters.indexOf(letter);
 	if (idx === -1) {
 		addToSolution(row, col, letter);
@@ -155,7 +194,7 @@ function selectTile(elem, row, col) {
 		placing.classList.remove('placing');
 	elem.classList.add('selected');
 	if (finished) {
-		let guess = currSolution[row][col];
+		let guess = currAttempt[row][col];
 		let solution = trueSolution[row][col];
 		for (let letter of alphabet) {
 			let inGuess = guess.indexOf(letter) !== -1;
@@ -176,7 +215,7 @@ function selectTile(elem, row, col) {
 	} else {
 		document.getElementById('select-heading').style.display = 'block';
 		document.getElementById('place-heading').style.display = 'none';
-		for (let letter of currSolution[row][col]) {
+		for (let letter of currAttempt[row][col]) {
 			document.querySelector(`.tile[data-letter="${letter}"]`)
 				.classList.add('possible');
 		}
@@ -222,7 +261,7 @@ function clickedSquare(highlight, row, col) {
 		} else if (e.button === 2) {
 			if (highlight.classList.contains('nothing')) {
 				highlight.classList.remove('nothing');
-			} else if (currSolution[row][col].length === 0) {
+			} else if (currAttempt[row][col].length === 0) {
 				highlight.classList.add('nothing');
 				if (highlight.classList.contains('selected'))
 					deselectTile();
@@ -251,6 +290,7 @@ function includeSquare(row, col) {
 }
 
 async function loadChallenge(id) {
+	challengeId = id;
 	let result = await fetch(`challenges-${lexicon}/${id}.txt`);
 	if (result.status === 404) {
 		alert(`Challenge for today hasn't been uploaded.
@@ -259,7 +299,7 @@ Please e-mail ${EMAIL}`);
 	} else if (Math.floor(result.status / 100) !== 2) {
 		alert(`Error getting today's challenge.
 Try refreshing the page, or clearing your browser's cache for this site.
-If problem persists, e-mail ${EMAIL}.`); 
+If problem persists, e-mail ${EMAIL}.`);
 	}
 	// TODO : check format & report error if wrong
 	let body = await result.text();
@@ -288,6 +328,9 @@ If problem persists, e-mail ${EMAIL}.`);
 	for (let row = 0; row < 15; row++)
 		for (let col = 0; col < 15; col++)
 			trueSolution[row][col].sort();
+	updateBoard();
+	loadAttempt();
+
 }
 
 function updateBoard() {
@@ -310,7 +353,7 @@ function updateBoard() {
 			let possibilities = document.createElement('span');
 			possibilities.classList.add('possibilities');
 			highlight.appendChild(possibilities);
-			updatePossibilities(highlight, currSolution[row][col]);
+			updatePossibilities(highlight, currAttempt[row][col]);
 			boardSquareElems[row][col].appendChild(highlight);
 			highlight.addEventListener('contextmenu', (e) => e.preventDefault());
 			highlight.addEventListener('mousedown', clickedSquare(highlight, row, col));
@@ -343,6 +386,7 @@ function updateSkipWordsOfLength() {
 	let skip2s = document.getElementById('skip-2s');
 	let skip3s = document.getElementById('skip-3s');
 	skipWordsOfLength = skip3s.checked ? 3 : skip2s.checked ? 2 : 1;
+	localStorage.setItem(`skip-${lexicon}`, skipWordsOfLength);
 	for (let row = 0; row < 15; row++) {
 		for (let col = 0; col < 15; col++) {
 			if (!includeSquare(row, col)) continue;
@@ -355,6 +399,7 @@ function updateSkipWordsOfLength() {
 
 function showSolution() {
 	finished = true;
+	saveAttempt();
 	deselectTile();
 	document.getElementById('select-nothing').style.display = 'none';
 	document.getElementById('select-heading').style.display = 'none';
@@ -367,12 +412,13 @@ function showSolution() {
 		for (let col = 0; col < 15; col++) {
 			if (!includeSquare(row, col))
 				continue;
-			let guess = currSolution[row][col];
+			let guess = currAttempt[row][col];
 			let solution = trueSolution[row][col];
 			let highlightElem = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
 			let possibilitiesElem = highlightElem.querySelector('.possibilities');
 			possibilitiesElem.innerHTML = '';
 			let totalLength = 0;
+			let allCorrect = true;
 			for (let letter of alphabet) {
 				let inGuess = guess.indexOf(letter) !== -1;
 				let inSolution = solution.indexOf(letter) !== -1;
@@ -384,22 +430,31 @@ function showSolution() {
 				if (!inGuess && inSolution) {
 					span.classList.add('missed');
 					if (!skipDueToLength(row, col)) missedPlays += 1;
+					allCorrect = false;
 				} else if (inGuess && !inSolution) {
 					span.classList.add('wrong');
 					if (!skipDueToLength(row, col)) incorrectPlays += 1;
+					allCorrect = false;
 				} else {
 					span.classList.add('correct');
 					if (!skipDueToLength(row, col)) correctPlays += 1;
 				}
 				possibilitiesElem.appendChild(span);
 			}
-			if (solution.length === 0) {
+			highlightElem.classList.remove('nothing');
+			if (allCorrect)
+				highlightElem.classList.add('all-correct');
+			else if (solution.length === 0)
 				highlightElem.classList.add('nothing');
+			else
+				highlightElem.classList.add('some-mistakes');
+
+			if (totalLength) {
+				let fontSize = getFontSizeForPossibilities(totalLength);
+				possibilitiesElem.style.fontSize = fontSize;
 			} else {
-				highlightElem.classList.remove('nothing');
+				highlightElem.remove();
 			}
-			let fontSize = getFontSizeForPossibilities(totalLength);
-			possibilitiesElem.style.fontSize = fontSize;
 		}
 	}
 	// show stats
@@ -438,9 +493,16 @@ function showSolution() {
 }
 
 function startup() {
+	let lexiconSelect = document.getElementById('lexicon');
+	lexiconSelect.value = lexicon;
+	lexiconSelect.addEventListener('change', () => {
+		location.search = `?lexicon=${lexiconSelect.value}`;
+	});
 	let boardElem = document.getElementById('board');
 	let skip2s = document.getElementById('skip-2s');
 	let skip3s = document.getElementById('skip-3s');
+	skip2s.checked = skipWordsOfLength >= 2;
+	skip3s.checked = skipWordsOfLength >= 3;
 	skip2s.addEventListener('change', () => {
 		if (!skip2s.checked)
 			skip3s.checked = false;
@@ -458,7 +520,7 @@ function startup() {
 		rowElem.classList.add('board-row');
 		boardElem.appendChild(rowElem);
 		boardSquareElems.push([]);
-		currSolution.push([]);
+		currAttempt.push([]);
 		for (let col = 0; col < N; col++) {
 			let squareElem = document.createElement('div');
 			squareElem.classList.add('board-square');
@@ -466,7 +528,7 @@ function startup() {
 			if (bonus) squareElem.classList.add(bonus);
 			rowElem.appendChild(squareElem);
 			boardSquareElems[row].push(squareElem);
-			currSolution[row].push([]);
+			currAttempt[row].push([]);
 		}
 	}
 	let selectContainer = document.getElementById('select-container');
@@ -513,7 +575,7 @@ function startup() {
 			rowContainer.appendChild(elem);
 		}
 	}
-	loadChallenge('00000').then(() => updateBoard());
+	loadChallenge('00000');
 }
 
 window.addEventListener('load', startup);
