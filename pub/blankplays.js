@@ -32,13 +32,13 @@ function getBonus(row, col) {
 	row = Math.min(row, N-1 - row);
 	col = Math.min(col, N-1 - col);
 	let id = Math.min(row * N + col, col * N + row);
-	if (id == 0 || id == 7) {
+	if (id === 0 || id === 7) {
 		return TRIPLE_WORD;
-	} else if (id == N+5 || id == 5*N+5) {
+	} else if (id === N+5 || id === 5*N+5) {
 		return TRIPLE_LETTER;
-	} else if (id == 3 || id == 2*N+6 || id == 3*N+7 || id == 6*N+6) {
+	} else if (id === 3 || id === 2*N+6 || id === 3*N+7 || id === 6*N+6) {
 		return DOUBLE_LETTER;
-	} else if (id == 7*N+7 || id == N+1 || id == 2*N+2 || id == 3*N+3 || id == 4*N+4) {
+	} else if (id === 7*N+7 || id === N+1 || id === 2*N+2 || id === 3*N+3 || id === 4*N+4) {
 		return DOUBLE_WORD;
 	} else {
 		return '';
@@ -84,7 +84,7 @@ function updatePossibilities(highlightElem, letters) {
 
 function addToSolution(row, col, letter) {
 	let highlight = document.querySelector(`.highlight[data-row="${row}"][data-col="${col}"]`);
-	if (letter == NOTHING) {
+	if (letter === NOTHING) {
 		currSolution[row][col] = [];
 		highlight.classList.add('nothing');
 		updatePossibilities(highlight, []);
@@ -160,7 +160,7 @@ function selectTile(elem, row, col) {
 		for (let letter of alphabet) {
 			let inGuess = guess.indexOf(letter) !== -1;
 			let inSolution = solution.indexOf(letter) !== -1;
-			let className = '';
+			let className;
 			if (inGuess && inSolution) {
 				className = 'correct';
 			} else if (inGuess && !inSolution) {
@@ -281,7 +281,7 @@ If problem persists, e-mail ${EMAIL}.`);
 	for (let i = 15; i < lines.length; i++) {
 		if (!lines[i]) continue;
 		let parts = lines[i].split(' ');
-		let square = parseInt(parts[0]);
+		let square = parseInt(parts[0], 10);
 		let letter = parts[1];
 		trueSolution[Math.floor(square / 15)][square % 15].push(letter);
 	}
@@ -472,11 +472,11 @@ function startup() {
 	let selectContainer = document.getElementById('select-container');
 	let selections = alphabet.slice();
 	selections.push(NOTHING);
-	for (let row = 0; row < 2; row++) {
+	for (let tileRow = 0; tileRow * N < selections.length; tileRow++) {
 		let rowContainer = document.createElement('div');
 		rowContainer.classList.add('select-container-row');
 		selectContainer.appendChild(rowContainer);
-		for (let i = row*N; i < (row+1)*N; i++) {
+		for (let i = tileRow*N; i < (tileRow+1)*N; i++) {
 			if (i >= selections.length) break;
 			let letter = selections[i];
 			let elem = document.createElement('span');
