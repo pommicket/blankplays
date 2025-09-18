@@ -97,18 +97,34 @@
 			.select-tile-container {
 				position: relative;
 				cursor: pointer;
+				margin: 2px;
 			}
 			.select-tile-container .tile {
-				background-color: #c88;
+				background-color: transparent;
 				font-weight: normal;
+				border: 2px solid black;
 			}
-			.select-tile-container .tile.possible {
+			.select-tile-container .tile.possible,
+			.select-tile-container .tile.correct {
 				background-color: #8c7;
 				font-weight: bold;
+				text-decoration: underline;
+			}
+			.select-tile-container .tile.missed {
+				background-color: #8c7;
+			}
+			.select-tile-container .tile.not-possible {
+				background-color: #c88;
+			}
+			.select-tile-container .tile.wrong {
+				background-color: #c88;
+				font-weight: bold;
+				text-decoration: underline;
 			}
 			.select-tile-container .tile.placing {
 				background-color: #88c;
 				font-weight: bold;
+				text-decoration: underline;
 			}
 			#submit {
 				outline: 0;
@@ -127,24 +143,68 @@
 				transform: translate(2px, 2px);
 				box-shadow: 0 0 0;
 			}
+			.solution-letter.wrong {
+				text-decoration: line-through;
+				font-weight: bold;
+				color: #800;
+			}
+			.solution-letter.wrong {
+				text-decoration: line-through;
+				font-weight: bold;
+				color: #800;
+			}
+			.solution-letter.correct {
+				color: #040;
+			}
+			.solution-letter.missed {
+				color: #00a;
+				font-weight: bold;
+			}
+			/* all browsers which support grid should support
+			   the JavaScript we use (if they have javascript at all). */
+			@supports(display: grid) {
+				#no-grid {
+					display: none;
+				}
+			}
+			progress#score-meter::-moz-progress-bar { background: var(--color); }
+			progress#score-meter::-webkit-progress-value { background: var(--color); }
+			progress#score-meter { color: var(--color); }
 		</style>
 		<script src="/blankplays.js" async></script>
 	</head>
 	<body>
+		<noscript>
+			<b>You must enable JavaScript in your browser to do these puzzles.</b><br>
+		</noscript>
+		<p id="no-grid" style="font-weight:bold;">
+			Your browser is too old. You'll have to update to a newer version to
+			do these puzzles.
+		</p>
 		Find all the possible plays with a single blank!<br>
-		<label><input type="checkbox" id="skip-2s"> Skip 2’s</label>
+		<label>Lexicon: <select id="lexicon">
+			<option value="nwl23">🇨🇦🇺🇸NWL23</option>
+			<option value="csw24">🇬🇧 CSW24</option>
+		</select></label>
+		<label><input type="checkbox" id="skip-2s" checked> Skip 2’s</label>
 		<label><input type="checkbox" id="skip-3s"> Skip 3’s</label>
 		<button id="submit">All done!</button>
 		<div id="board"></div>
-		<div id="select" style="display: none;">
+		<div id="select-heading" style="display: none;">
 			Select which letters can go here:
 		</div>
-		<div id="place">
+		<div id="place-heading">
 			Choose a letter and click where it goes:
 		</div>
-		<div id="select-container">
-			<div class="select-container-row"></div>
-			<div class="select-container-row"></div>
+		<div id="select-container"></div>
+		<div id="stats" style="display:none;">
+			Score: <progress id="score-meter" min="0" max="100"></progress>
+				<span id="score-span"></span>/100<br>
+			Correct plays identified: <span id="correct-plays"></span><br>
+			Incorrect plays guessed: <span id="incorrect-plays"></span><br>
+			Missed plays: <span id="missed-plays"></span><br>
+			<textarea id="share" cols="50" rows="3"></textarea><br>
+			<button id="share-copy">Copy to clipboard</button>
 		</div>
 	</body>
 </html>

@@ -152,8 +152,9 @@ for filename in args.log_files:
 		if fields[3] == '?':
 			game = games[game_id]
 			plays = game.blank_plays()
-			nice_plays = [play for play in plays if is_nice(play)]
-			# require at least 3 plays that make 5+-letter words
+			nice_plays = {play[0] for play in plays if is_nice(play)}
+			print(nice_plays)
+			# require at least 3 squares that make 5+-letter words
 			if len(nice_plays) >= 3:
 				game.output(f'{output_dir}/{game_idx:05}.txt')
 				print(game.board_string())
