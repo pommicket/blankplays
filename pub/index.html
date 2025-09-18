@@ -7,7 +7,7 @@
 		<link rel="icon" href="data:,"><!--TODO-->
 		<style>
 			body {
-				font-family: sans-serif;
+				font-family: Helvetica, sans-serif;
 			}
 			#board {
 				display: grid;
@@ -28,13 +28,13 @@
 				background-color: #acf;
 			}
 			.board-square.triple-letter {
-				background-color: #458;
+				background-color: #99f;
 			}
 			.board-square.double-word {
 				background-color: #fac;
 			}
 			.board-square.triple-word {
-				background-color: #900;
+				background-color: #c66;
 			}
 			.tile {
 				background: #eca;
@@ -59,12 +59,18 @@
 				height: calc(100% - 8px);
 				position: absolute;
 				cursor: pointer;
+				display: flex;
+				justify-content: center;
+				align-items: center;
 			}
 			.highlight.nothing {
 				border: 4px solid #f00;
 			}
 			.highlight.selected {
 				border: 4px solid #00f;
+			}
+			.possibilities {
+				word-break: break-all;
 			}
 			.point-container {
 				position: relative;
@@ -100,19 +106,26 @@
 				background-color: #8c7;
 				font-weight: bold;
 			}
+			.select-tile-container .tile.placing {
+				background-color: #88c;
+				font-weight: bold;
+			}
 		</style>
 		<script src="/blankplays.js" async></script>
 	</head>
 	<body>
-		Find all the possible plays with a single blank!
+		Find all the possible plays with a single blank!<br>
 		<button>All done!</button>
 		<div id="board"></div>
 		<div id="select" style="display: none;">
 			Select which letters can go here:
-			<div id="select-container">
-				<div class="select-container-row"></div>
-				<div class="select-container-row"></div>
-			</div>
+		</div>
+		<div id="place">
+			Choose a letter and click where it goes:
+		</div>
+		<div id="select-container">
+			<div class="select-container-row"></div>
+			<div class="select-container-row"></div>
 		</div>
 	</body>
 </html>

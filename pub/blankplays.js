@@ -54,6 +54,49 @@ function pointValue(letter) {
 }
 
 let boardSquareElems = [];
+let currSolution = [];
+
+function updatePossibilities(highlightElem, letters) {
+	let possibilitiesElem = highlightElem.querySelector('.possibilities');
+	possibilitiesElem.innerText = letters.join('');
+	let n = letters.length;
+	let fontSize = n === 1 ? 100
+		: n < 5 ? 60
+		: n < 7 ? 48
+		: n < 12 ? 40
+		: n < 20 ? 32
+		: 26;
+	possibilitiesElem.style.fontSize = fontSize + '%';
+}
+
+function addToSolution(row, col, letter) {
+	let letters = currSolution[row][col];
+	if (letters.indexOf(letter) !== -1) return;
+	letters.push(letter);
+	letters.sort();
+	let highlight = document.querySelector(`.highlight[data-row="${row}"][data-col="${col}"]`);
+	highlight.classList.remove('nothing');
+	updatePossibilities(highlight, letters);
+}
+
+function removeFromSolution(row, col, letter) {
+	let letters = currSolution[row][col];
+	let idx = letters.indexOf(letter);
+	if (idx === -1) return;
+	letters.splice(idx, 1);
+	let highlight = document.querySelector(`.highlight[data-row="${row}"][data-col="${col}"]`);
+	updatePossibilities(highlight, letters);
+}
+
+function toggleInSolution(row, col, letter) {
+	let letters = currSolution[row][col];
+	let idx = letters.indexOf(letter);
+	if (idx === -1) {
+		addToSolution(row, col, letter);
+	} else {
+		removeFromSolution(row, col, letter);
+	}
+}
 
 function makeTile(container, letter, showPointValue) {
 	let tile = document.createElement('span');
@@ -81,25 +124,37 @@ function putTile(row, col, letter) {
 }
 
 function selectTile(elem, row, col) {
+	let placing = document.querySelector('.tile.placing');
+	if (placing)
+		placing.classList.remove('placing');
 	deselectTile();
 	elem.classList.add('selected');
 	document.getElementById('select').style.display = 'block';
+	document.getElementById('place').style.display = 'none';
+	for (let letter of currSolution[row][col]) {
+		document.querySelector(`.tile[data-letter="${letter}"]`)
+			.classList.add('possible');
+	}
 }
 
 function deselectTile() {
-	let selected = document.querySelector('.selected');
+	let selected = document.querySelector('.highlight.selected');
 	if (selected)
 		selected.classList.remove('selected');
 	for (let tile of document.querySelectorAll('.tile.possible')) {
 		tile.classList.remove('possible');
 	}
 	document.getElementById('select').style.display = 'none';
+	document.getElementById('place').style.display = 'block';
 }
 
 function clickedSquare(highlight, row, col) {
 	return (e) => {
 		if (e.button === 0) {
-			if (highlight.classList.contains('selected')) {
+			let placing = document.querySelector('.placing');
+			if (placing) {
+				toggleInSolution(row, col, placing.dataset.letter);
+			} else if (highlight.classList.contains('selected')) {
 				deselectTile();
 			} else {
 				selectTile(highlight, row, col);
@@ -108,7 +163,7 @@ function clickedSquare(highlight, row, col) {
 		} else if (e.button === 2) {
 			if (highlight.classList.contains('nothing')) {
 				highlight.classList.remove('nothing');
-			} else {
+			} else if (currSolution[row][col].length === 0) {
 				highlight.classList.add('nothing');
 				if (highlight.classList.contains('selected'))
 					deselectTile();
@@ -152,6 +207,11 @@ async function loadChallenge(id) {
 			}
 			let highlight = document.createElement('div');
 			highlight.classList.add('highlight');
+			highlight.dataset.row = row;
+			highlight.dataset.col = col;
+			let possibilities = document.createElement('span');
+			possibilities.classList.add('possibilities');
+			highlight.appendChild(possibilities);
 			boardSquareElems[row][col].appendChild(highlight);
 			highlight.addEventListener('contextmenu', (e) => e.preventDefault());
 			highlight.addEventListener('mousedown', clickedSquare(highlight, row, col));
@@ -166,6 +226,7 @@ function startup() {
 		rowElem.classList.add('board-row');
 		board.appendChild(rowElem);
 		boardSquareElems.push([]);
+		currSolution.push([]);
 		for (let col = 0; col < N; col++) {
 			let squareElem = document.createElement('div');
 			squareElem.classList.add('board-square');
@@ -173,6 +234,7 @@ function startup() {
 			if (bonus) squareElem.classList.add(bonus);
 			rowElem.appendChild(squareElem);
 			boardSquareElems[row].push(squareElem);
+			currSolution[row].push([]);
 		}
 	}
 	let selectContainer = document.getElementById('select-container');
@@ -185,11 +247,27 @@ function startup() {
 			elem.classList.add('select-tile-container');
 			makeTile(elem, tiles[i], false);
 			let tileElem = elem.querySelector('.tile');
+			tileElem.dataset.letter = tiles[i];
 			elem.addEventListener('click', () => {
-				if (tileElem.classList.contains('possible'))
-					tileElem.classList.remove('possible');
-				else
-					tileElem.classList.add('possible');
+				let tileSelected = document.querySelector('.highlight.selected');
+				let className = tileSelected ? 'possible' : 'placing';
+				if (tileElem.classList.contains(className)) {
+					tileElem.classList.remove(className);
+					if (tileSelected) {
+						let row = parseInt(tileSelected.dataset.row);
+						let col = parseInt(tileSelected.dataset.col);
+						removeFromSolution(row, col, tiles[i]);
+					}
+				} else {
+					let placing = document.querySelector('.placing');
+					if (placing) placing.classList.remove('placing');
+					tileElem.classList.add(className);
+					if (tileSelected) {
+						let row = parseInt(tileSelected.dataset.row);
+						let col = parseInt(tileSelected.dataset.col);
+						addToSolution(row, col, tiles[i]);
+					}
+				}
 			});
 			rowContainer.appendChild(elem);
 		}
