@@ -110,12 +110,31 @@
 				background-color: #88c;
 				font-weight: bold;
 			}
+			#submit {
+				outline: 0;
+				border: 2px solid #44a;
+				outline: 2px solid #00a;
+				box-shadow: 2px 2px 4px #00a;
+				margin: 4px;
+				border-radius: 5px;
+				padding: 2px 5px;
+				background: #ddf;
+			}
+			#submit:hover {
+				background: #bbf;
+			}
+			#submit:active {
+				transform: translate(2px, 2px);
+				box-shadow: 0 0 0;
+			}
 		</style>
 		<script src="/blankplays.js" async></script>
 	</head>
 	<body>
 		Find all the possible plays with a single blank!<br>
-		<button>All done!</button>
+		<label><input type="checkbox" id="skip-2s"> Skip 2’s</label>
+		<label><input type="checkbox" id="skip-3s"> Skip 3’s</label>
+		<button id="submit">All done!</button>
 		<div id="board"></div>
 		<div id="select" style="display: none;">
 			Select which letters can go here:
