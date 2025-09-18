@@ -250,7 +250,6 @@ function includeSquare(row, col) {
 	return true;
 }
 
-// TODO : error handling
 async function loadChallenge(id) {
 	let result = await fetch(`challenges-${lexicon}/${id}.txt`);
 	if (result.status === 404) {
@@ -262,6 +261,7 @@ Please e-mail ${EMAIL}`);
 Try refreshing the page, or clearing your browser's cache for this site.
 If problem persists, e-mail ${EMAIL}.`); 
 	}
+	// TODO : check format & report error if wrong
 	let body = await result.text();
 	let lines = body.split('\n');
 	board = [];
@@ -421,7 +421,20 @@ function showSolution() {
 	if (score !== 100);
 		shareText += '\nCan you do better?';
 	shareText += `\nhttps://blankplays.pommicket.com?lexicon=${lexicon}`;
-	document.getElementById('share').value = shareText;
+	let shareElem = document.getElementById('share');
+	shareElem.value = shareText;
+	let shareCopyButton = document.getElementById('share-copy');
+	shareCopyButton.addEventListener('click', async function() {
+		const COPIED = 'Copied to clipboard!';
+		if ('clipboard' in navigator) {
+			await navigator.clipboard.writeText(shareText);
+		} else {
+			shareElem.focus();
+			shareElem.select();
+			document.execCommand('copy');
+		}
+		shareCopyButton.innerText = COPIED;
+	});
 }
 
 function startup() {
