@@ -153,7 +153,6 @@ for filename in args.log_files:
 			game = games[game_id]
 			plays = game.blank_plays()
 			nice_plays = {play[0] for play in plays if is_nice(play)}
-			print(nice_plays)
 			# require at least 3 squares that make 5+-letter words
 			if len(nice_plays) >= 3:
 				game.output(f'{output_dir}/{game_idx:05}.txt')

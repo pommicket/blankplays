@@ -1,10 +1,5 @@
 'use strict';
 
-/*
-TODO:
-- clear solution
-*/
-
 const N = 15; // board size
 
 const NOTHING = "∅";
@@ -17,15 +12,19 @@ localStorage.setItem('prevLexicon', lexicon);
 function updateBoardSize() {
 	let boardElem = document.getElementById('board');
 	// sucks for desktop zooming, but there's no way around it.
-	let width = innerWidth;
+	let width = document.body.clientWidth; // use clientWidth to not include body margins
 	let height = innerHeight;
-	let boardSize = Math.min(width - 20, Math.floor(height * 0.7));
-	let fontSize = (boardSize / N - 4) * 0.6;
-	boardElem.style.fontSize = fontSize + 'px';
+	let boardSize = Math.min(width, Math.floor(height * 0.7));
+	let tileSize = boardSize / N;
+	//  use large font size if it's <=1cm,
+	//  small font size if it's >1cm
+	//  use 1cm font size otherwise.
+	let fontSize = `max(${tileSize * 0.6}px,min(${tileSize * 0.7}px,1cm))`;
+	boardElem.style.fontSize = fontSize;
 	boardElem.style.width = boardSize + 'px';
 	boardElem.style.height = boardSize + 'px';
 	let selectContainer = document.getElementById('select-container');
-	selectContainer.style.fontSize = fontSize + 'px';
+	selectContainer.style.fontSize = fontSize;
 	selectContainer.style.width = boardSize + 'px';
 	selectContainer.style.height = boardSize / N * 2 + 'px';
 }
@@ -385,7 +384,8 @@ function skipDueToLength(row, col) {
 function updateSkipWordsOfLength() {
 	let skip2s = document.getElementById('skip-2s');
 	let skip3s = document.getElementById('skip-3s');
-	skipWordsOfLength = skip3s.checked ? 3 : skip2s.checked ? 2 : 1;
+	let skip4s = document.getElementById('skip-4s');
+	skipWordsOfLength = skip4s.checked ? 4 : skip3s.checked ? 3 : skip2s.checked ? 2 : 1;
 	localStorage.setItem(`skip-${lexicon}`, skipWordsOfLength);
 	for (let row = 0; row < 15; row++) {
 		for (let col = 0; col < 15; col++) {
@@ -401,6 +401,7 @@ function showSolution() {
 	finished = true;
 	saveAttempt();
 	deselectTile();
+	document.getElementById('submit').style.display = 'none';
 	document.getElementById('select-nothing').style.display = 'none';
 	document.getElementById('select-heading').style.display = 'none';
 	document.getElementById('place-heading').style.display = 'none';
@@ -472,8 +473,10 @@ function showSolution() {
 	document.getElementById('incorrect-plays').innerText = incorrectPlays;
 	document.getElementById('missed-plays').innerText = missedPlays;
 	document.getElementById('stats').style.display = 'block';
-	let shareText = `I got ${score}/100 on today's BlankPlays!`;
-	if (score !== 100);
+	let shareText = `I scored ${score}/100 on today's BlankPlays!`;
+	if (score === 100)
+		shareText += ' 😎';
+	else
 		shareText += '\nCan you do better?';
 	shareText += `\nhttps://blankplays.pommicket.com?lexicon=${lexicon}`;
 	let shareElem = document.getElementById('share');
@@ -492,7 +495,28 @@ function showSolution() {
 	});
 }
 
+function showDialogById(id) {
+	let elem = document.getElementById(id);
+	if (elem.showModal) {
+		elem.showModal();
+	} else {
+		// support for browsers without <dialog>
+		//  (older iOS safari mainly)
+		elem.style.display = 'block';
+		elem.scrollIntoView();
+	}
+}
+
 function startup() {
+	document.getElementById('how-to-play-button').addEventListener('click', () => {
+		showDialogById('how-to-play');
+	});
+	document.getElementById('credits-button').addEventListener('click', () => {
+		showDialogById('credits');
+	});
+	document.getElementById('report-issue-button').addEventListener('click', () => {
+		showDialogById('report-issue');
+	});
 	let lexiconSelect = document.getElementById('lexicon');
 	lexiconSelect.value = lexicon;
 	lexiconSelect.addEventListener('change', () => {
@@ -501,16 +525,29 @@ function startup() {
 	let boardElem = document.getElementById('board');
 	let skip2s = document.getElementById('skip-2s');
 	let skip3s = document.getElementById('skip-3s');
+	let skip4s = document.getElementById('skip-4s');
 	skip2s.checked = skipWordsOfLength >= 2;
 	skip3s.checked = skipWordsOfLength >= 3;
+	skip4s.checked = skipWordsOfLength >= 4;
 	skip2s.addEventListener('change', () => {
-		if (!skip2s.checked)
+		if (!skip2s.checked) {
 			skip3s.checked = false;
+			skip4s.checked = false;
+		}
 		updateSkipWordsOfLength();
 	});
 	skip3s.addEventListener('change', () => {
 		if (skip3s.checked)
 			skip2s.checked = true;
+		if (!skip3s.checked)
+			skip4s.checked = true;
+		updateSkipWordsOfLength();
+	});
+	skip4s.addEventListener('change', () => {
+		if (skip4s.checked) {
+			skip2s.checked = true;
+			skip3s.checked = true;
+		}
 		updateSkipWordsOfLength();
 	});
 	document.getElementById('submit').addEventListener('click', showSolution);

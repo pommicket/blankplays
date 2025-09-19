@@ -5,178 +5,7 @@
 		<meta content="width=device-width,initial-scale=1" name="viewport">
 		<title>BlankPlays</title>
 		<link rel="icon" href="/icon.png">
-		<style>
-			body {
-				font-family: Helvetica, sans-serif;
-			}
-			#board {
-				display: grid;
-				grid-template-rows: repeat(15, 1fr);
-			}
-			.board-row {
-				display: grid;
-				grid-template-columns: repeat(15, 1fr);
-				grid-auto-flow: column;
-			}
-			.board-square {
-				margin: 1px;
-				background-color: #dde;
-				line-height: 1;
-				position: relative;
-			}
-			.board-square.double-letter {
-				background-color: #acf;
-			}
-			.board-square.triple-letter {
-				background-color: #afc;
-			}
-			.board-square.double-word {
-				background-color: #fac;
-			}
-			.board-square.triple-word {
-				background-color: #c66;
-			}
-			.tile {
-				background: #eca;
-				position: absolute;
-				top: 6%;
-				left: 6%;
-				width: 88%;
-				height: 88%;
-				border-radius: 4px;
-				display: flex;
-				justify-content: center;
-				align-items: center;
-				font-weight: bold;
-			}
-			.blank {
-				color: #333;
-				font-weight: normal;
-			}
-			.highlight {
-				border: 4px solid rgba(60,60,60,0.6);
-				width: calc(100% - 8px);
-				height: calc(100% - 8px);
-				position: absolute;
-				cursor: pointer;
-				display: flex;
-				justify-content: center;
-				align-items: center;
-			}
-			.highlight.nothing {
-				border: 4px solid #f00;
-			}
-			#board .highlight.selected {
-				border: 4px solid #00f;
-			}
-			.highlight.all-correct {
-				border: 4px solid #0a0;
-			}
-			.highlight.some-mistakes {
-				border: 4px solid #f80;
-			}
-			.possibilities {
-				word-break: break-all;
-			}
-			.point-container {
-				position: relative;
-				width: 100%;
-				height: 100%;
-			}
-			.point-value {
-				position: absolute;
-				bottom: 8%;
-				right: 8%;
-				text-align: center;
-				font-size: 40%;
-			}
-			#select-container {
-				display: grid;
-				grid-template-rows: repeat(2, 1fr);
-			}
-			.select-container-row {
-				display: grid;
-				grid-template-columns: repeat(15, 1fr);
-				grid-auto-flow: column;
-				width: 100%;
-			}
-			.select-tile-container {
-				position: relative;
-				cursor: pointer;
-				margin: 2px;
-			}
-			.select-tile-container .tile {
-				background-color: transparent;
-				font-weight: normal;
-				border: 2px solid black;
-			}
-			.select-tile-container .tile.possible,
-			.select-tile-container .tile.correct {
-				background-color: #8c7;
-				font-weight: bold;
-				text-decoration: underline;
-			}
-			.select-tile-container .tile.missed {
-				background-color: #8c7;
-			}
-			.select-tile-container .tile.not-possible {
-				background-color: #c88;
-			}
-			.select-tile-container .tile.wrong {
-				background-color: #c88;
-				font-weight: bold;
-				text-decoration: underline;
-			}
-			.select-tile-container .tile.placing {
-				background-color: #88c;
-				font-weight: bold;
-				text-decoration: underline;
-			}
-			#submit {
-				outline: 0;
-				border: 2px solid #44a;
-				outline: 2px solid #00a;
-				box-shadow: 2px 2px 4px #00a;
-				margin: 4px;
-				border-radius: 5px;
-				padding: 2px 5px;
-				background: #ddf;
-			}
-			#submit:hover {
-				background: #bbf;
-			}
-			#submit:active {
-				transform: translate(2px, 2px);
-				box-shadow: 0 0 0;
-			}
-			.solution-letter.wrong {
-				text-decoration: line-through;
-				font-weight: bold;
-				color: #800;
-			}
-			.solution-letter.wrong {
-				text-decoration: line-through;
-				font-weight: bold;
-				color: #800;
-			}
-			.solution-letter.correct {
-				color: #060;
-			}
-			.solution-letter.missed {
-				color: #00a;
-				font-weight: bold;
-			}
-			/* all browsers which support grid should support
-			   the JavaScript we use (if they have javascript at all). */
-			@supports(display: grid) {
-				#no-grid {
-					display: none;
-				}
-			}
-			progress#score-meter::-moz-progress-bar { background: var(--color); }
-			progress#score-meter::-webkit-progress-value { background: var(--color); }
-			progress#score-meter { color: var(--color); }
-		</style>
+		<link rel="stylesheet" href="/index.css">
 		<script src="/blankplays.js" async></script>
 	</head>
 	<body>
@@ -184,16 +13,24 @@
 			<b>You must enable JavaScript in your browser to do these puzzles.</b><br>
 		</noscript>
 		<p id="no-grid" style="font-weight:bold;">
-			Your browser is too old. You'll have to update to a newer version to
+			Your browser is too old. You’ll have to update to a newer version to
 			do these puzzles.
 		</p>
-		Find all the possible plays with a single blank!<br>
+		<div class="links">
+			<a href="#" id="report-issue-button">Report an issue</a> &middot;
+			<a href="https://github.com/pommicket/blankplays" target="_blank">Code</a> &middot;
+			<a href="#" id="credits-button">Credits</a> &middot;
+			<a href="#" id="how-to-play-button">How to Play</a>
+		</div>
+		<h2>BlankPlays</h2>
+		Find all possible plays with a single blank!<br>
 		<label>Lexicon: <select id="lexicon">
 			<option value="nwl23">🇨🇦🇺🇸NWL23</option>
 			<option value="csw24">🇬🇧 CSW24</option>
 		</select></label>
 		<label><input type="checkbox" id="skip-2s"> Skip 2’s</label>
 		<label><input type="checkbox" id="skip-3s"> Skip 3’s</label>
+		<label><input type="checkbox" id="skip-4s"> Skip 4’s</label>
 		<button id="submit">All done!</button>
 		<div id="board"></div>
 		<div id="select-heading" style="display: none;">
@@ -212,5 +49,84 @@
 			<textarea id="share" cols="50" rows="3"></textarea><br>
 			<button id="share-copy">Copy to clipboard</button>
 		</div>
+
+
+	
+		<dialog id="how-to-play">
+			<h3>How to Play</h3>
+			<p>
+				BlankPlays is a puzzle where you try to find all legal plays
+				from a given Scrabble™* position, where the only tile
+				on your rack is a single blank.
+			</p>
+			<p>
+				To begin, click/tap on a square on the board that is highlighted with a gray outline.
+				Then click/tap on the tiles below the board to select which letters you think can go in that
+				position.
+			</p>
+			<p>
+				You can also start by clicking a tile at the bottom of the board, then click on all positions
+				where you think it can go.
+			</p>
+			<p>
+				If you think no letters play on a square, you can right-click it, or use the ø tile below the board,
+				to mark it in red (this doesn’t affect scoring but might help you keep track of things).
+			</p>
+			<p>
+				When you’re done, click the “All done!” button. This will show you which plays you missed,
+				which of your guesses were incorrect (form illegal words), and which were correct.
+				You’ll get a score out of 100 based on how well you did.
+			</p>
+			<p>
+				By default, squares which only allow for 2 letter words are disabled.
+				You can change this by turning off the “Skip 2’s” checkbox,
+				or go even further and disable squares which only make 3/4 letter words
+				with the “Skip 3/4’s” checkboxes.
+			</p>
+			<p>
+				You can select the lexicon (word list) to use with the little selector at the top.
+				NWL is typically used in Canada and the United States,
+				and CSW is used in the rest of the English-speaking world.
+			</p>
+			<p>
+				<small>* BlankPlays is not an official or approved Scrabble product and is not associated
+					with Hasbro or Mattel in any way.</small>
+			</p>
+		  <form method="dialog">
+		    <button>OK</button>
+		  </form>
+		</dialog>
+		<dialog id="credits">
+			<h3>Credits</h3>
+			<p>
+				These game positions were generated using the
+				<a href="https://github.com/domino14/macondo" target="_blank">Macondo</a>
+				program’s <code>autoplay</code> feature, courtesy of César del Solar.
+			</p>
+			<p>
+				The NWL lexicon is by the North American Scrabble Players’ Association (NASPA),
+				and the CSW lexicon is by HarperCollins.
+				
+			</p>
+			<p>
+				Design/programming by pommicket.
+			</p>
+		  <form method="dialog">
+		    <button>OK</button>
+		  </form>
+		</dialog>
+		<dialog id="report-issue">
+			<h3>Report an issue</h3>
+			<p>
+				Found something that can be fixed or improved? Please let me know!
+				You can report an issue on the
+				<a href="https://github.com/pommicket/blankplays/issues/new" target="_blank">GitHub page</a>
+				or by sending an e-mail to
+				<a href="mailto:pommicket%40pommicket.com" target="_blank">pommicket&#64;pommicket.com</a>.
+			</p>
+		  <form method="dialog">
+		    <button>OK</button>
+		  </form>
+		</dialog>
 	</body>
 </html>
