@@ -399,7 +399,8 @@ If problem persists, e-mail ${EMAIL}.`);
 			let row = parseInt(squareSelected.dataset.row);
 			let col = parseInt(squareSelected.dataset.col);
 			toggleInGuesses(row, col, letter);
-			tile.classList.toggle('possible');
+			if (letter !== NOTHING)
+				tile.classList.toggle('possible');
 		} else {
 			if (placing && placing !== tile) placing.classList.remove('placing');
 			tile.classList.toggle('placing');
