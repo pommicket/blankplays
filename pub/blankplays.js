@@ -521,7 +521,11 @@ function showDialogById(id) {
 		// support for browsers without <dialog>
 		//  (older iOS safari mainly)
 		elem.style.display = 'block';
-		elem.scrollIntoView();
+		// not sure why this needs to be in a timeout.
+		// i guess we need to wait for re-flow or whatever.
+		setTimeout(() => {
+			elem.scrollIntoView(true);
+		}, 10);
 	}
 }
 
