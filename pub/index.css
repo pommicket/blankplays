@@ -1,5 +1,6 @@
 body {
 	font-family: Helvetica, sans-serif;
+	color: #000;
 	--tile-margin: 5%;
 	--tile-color: #eca;
 	--button-background-color: #eee;
@@ -170,7 +171,7 @@ input[name=color-mode] {
 	background-color: transparent;
 	font-weight: normal;
 	box-sizing: border-box;
-	border: 0.3vmin solid var(--select-tile-border-color);
+	border: min(0.7mm, 0.3vmin) solid var(--select-tile-border-color);
 	width: min(1.5cm,10vmin);
 	height: min(1.5cm,10vmin);
 	font-size: min(1.2cm,8vmin);
@@ -179,8 +180,14 @@ input[name=color-mode] {
 .select-tile-container .tile.possible,
 .select-tile-container .tile.correct {
 	background-color: var(--select-tile-possible-color);
+}
+
+.select-tile-container .tile.possible,
+.select-tile-container .tile.correct,
+.select-tile-container .tile.wrong,
+.select-tile-container .tile.placing {
+	border-width: min(1.5mm, 0.6vmin);
 	font-weight: bold;
-	border-width: 0.6vmin;
 }
 .select-tile-container .tile.missed {
 	background-color: var(--select-tile-possible-color);
@@ -190,12 +197,9 @@ input[name=color-mode] {
 }
 .select-tile-container .tile.wrong {
 	background-color: var(--select-tile-not-possible-color);
-	font-weight: bold;
-	border-width: 0.6vmin;
 }
 .select-tile-container .tile.placing {
 	background-color: var(--select-tile-placing-color);
-	font-weight: bold;
 }
 #submit {
 	outline: 0;

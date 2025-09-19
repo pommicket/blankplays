@@ -6,7 +6,7 @@
 		<title>BlankPlays</title>
 		<link rel="icon" href="/icon.png">
 		<link rel="stylesheet" href="/index.css">
-		<script src="/blankplays.js" async></script>
+		<script src="/blankplays.js?v=2" id="main-script" async></script>
 	</head>
 	<body>
 		<script blocking="render">
@@ -32,7 +32,7 @@
 			<a href="#" id="how-to-play-button">How to Play</a>
 		</div>
 		<h2>BlankPlays</h2>
-		Find all possible plays with a single blank!<br>
+		Find all possible plays with a single blank! Daily challenge #<span id="challenge-num">(loading)</span><br>
 		<label>Lexicon: <select id="lexicon">
 			<option value="nwl23">🇨🇦🇺🇸NWL23</option>
 			<option value="csw24">🇬🇧 CSW24</option>
@@ -72,16 +72,15 @@
 			</p>
 			<p>
 				To begin, click/tap on a square on the board that is highlighted with a gray outline.
-				Then click/tap on the tiles below the board to select which letters you think can go in that
-				position.
-			</p>
-			<p>
+				Then click/tap on the tiles below the board, or press the corresponding keys on your keyboard,
+				to select which letters you think can go in that position.
 				You can also start by clicking a tile at the bottom of the board, then click on all positions
 				where you think it can go.
 			</p>
 			<p>
 				If you think no letters play on a square, you can right-click it, or use the ø tile below the board,
 				to mark it in red (this doesn’t affect scoring but might help you keep track of things).
+				You can also select the square and press the Tab key.
 			</p>
 			<p>
 				When you’re done, click the “All done!” button. This will show you which plays you missed,

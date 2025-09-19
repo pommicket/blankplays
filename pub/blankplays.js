@@ -135,6 +135,7 @@ function addToGuesses(row, col, letter) {
 		highlight.classList.add('nothing');
 		updatePossibilities(highlight, []);
 		deselectTile();
+		saveAttempt();
 		return;
 	}
 	let letters = currAttempt[row][col];
@@ -150,6 +151,7 @@ function removeFromGuesses(row, col, letter) {
 	let highlight = document.querySelector(`.highlight[data-row="${row}"][data-col="${col}"]`);
 	if (letter === NOTHING) {
 		highlight.classList.remove('nothing');
+		saveAttempt();
 		return;
 	}
 	let letters = currAttempt[row][col];
@@ -346,7 +348,64 @@ If problem persists, e-mail ${EMAIL}.`);
 			trueSolution[row][col].sort();
 	updateBoard();
 	loadAttempt();
-
+	let skip2s = document.getElementById('skip-2s');
+	let skip3s = document.getElementById('skip-3s');
+	let skip4s = document.getElementById('skip-4s');
+	skip2s.checked = skipWordsOfLength >= 2;
+	skip3s.checked = skipWordsOfLength >= 3;
+	skip4s.checked = skipWordsOfLength >= 4;
+	skip2s.addEventListener('change', () => {
+		if (!skip2s.checked) {
+			skip3s.checked = false;
+			skip4s.checked = false;
+		}
+		updateSkipWordsOfLength();
+	});
+	skip3s.addEventListener('change', () => {
+		if (skip3s.checked)
+			skip2s.checked = true;
+		if (!skip3s.checked)
+			skip4s.checked = false;
+		updateSkipWordsOfLength();
+	});
+	skip4s.addEventListener('change', () => {
+		if (skip4s.checked) {
+			skip2s.checked = true;
+			skip3s.checked = true;
+		}
+		updateSkipWordsOfLength();
+	});
+	updateSkipWordsOfLength();
+	document.getElementById('submit')
+		.addEventListener('click', showSolution);
+	window.addEventListener('keydown', (e) => {
+		if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey)
+			return;
+		let letter = e.key.toUpperCase();
+		let placing = document.querySelector('.placing');
+		let squareSelected = document.querySelector('.highlight.selected');
+		if (letter === 'ESCAPE') {
+			if (placing) placing.classList.remove('placing');
+			if (squareSelected) squareSelected.classList.remove('selected');
+			return;
+		} else if (letter === 'DELETE' || letter === 'TAB') {
+			letter = NOTHING;
+		} else if (alphabet.indexOf(letter) === -1) {
+			return;
+		}
+		if (finished) return;
+		let tile = document.querySelector(`.select-tile-container .tile[data-letter="${letter}"]`);
+		if (squareSelected) {
+			let row = parseInt(squareSelected.dataset.row);
+			let col = parseInt(squareSelected.dataset.col);
+			toggleInGuesses(row, col, letter);
+			tile.classList.toggle('possible');
+		} else {
+			if (placing && placing !== tile) placing.classList.remove('placing');
+			tile.classList.toggle('placing');
+		}
+		e.preventDefault();
+	});
 }
 
 function updateBoard() {
@@ -375,7 +434,6 @@ function updateBoard() {
 			highlight.addEventListener('mousedown', clickedSquare(highlight, row, col));
 		}
 	}
-	updateSkipWordsOfLength();
 }
 
 function skipDueToLength(row, col) {
@@ -403,12 +461,14 @@ function updateSkipWordsOfLength() {
 	let skip3s = document.getElementById('skip-3s');
 	let skip4s = document.getElementById('skip-4s');
 	skipWordsOfLength = skip4s.checked ? 4 : skip3s.checked ? 3 : skip2s.checked ? 2 : 1;
-	localStorage.setItem(`skip-${lexicon}`, skipWordsOfLength);
+	if (!finished)
+		localStorage.setItem(`skip-${lexicon}`, skipWordsOfLength);
 	for (let row = 0; row < N; row++) {
 		for (let col = 0; col < N; col++) {
 			if (!includeSquare(row, col)) continue;
 			let tooShort = skipDueToLength(row, col);
-			document.querySelector(`.highlight[data-row="${row}"][data-col="${col}"]`).style.visibility =
+			let highlightElem = document.querySelector(`.highlight[data-row="${row}"][data-col="${col}"]`);
+			highlightElem.style.visibility =
 				tooShort ? 'hidden' : 'visible';
 		}
 	}
@@ -471,7 +531,7 @@ function showSolution() {
 				let fontSize = getFontSizeForPossibilities(totalLength);
 				possibilitiesElem.style.fontSize = fontSize;
 			} else {
-				highlightElem.remove();
+				highlightElem.style.display = 'none';
 			}
 		}
 	}
@@ -529,7 +589,7 @@ function showDialogById(id) {
 	}
 }
 
-function startup() {
+async function startup() {
 	document.getElementById('how-to-play-button').addEventListener('click', () => {
 		showDialogById('how-to-play');
 	});
@@ -563,34 +623,6 @@ function startup() {
 		location.search = `?lexicon=${lexiconSelect.value}`;
 	});
 	let boardElem = document.getElementById('board');
-	let skip2s = document.getElementById('skip-2s');
-	let skip3s = document.getElementById('skip-3s');
-	let skip4s = document.getElementById('skip-4s');
-	skip2s.checked = skipWordsOfLength >= 2;
-	skip3s.checked = skipWordsOfLength >= 3;
-	skip4s.checked = skipWordsOfLength >= 4;
-	skip2s.addEventListener('change', () => {
-		if (!skip2s.checked) {
-			skip3s.checked = false;
-			skip4s.checked = false;
-		}
-		updateSkipWordsOfLength();
-	});
-	skip3s.addEventListener('change', () => {
-		if (skip3s.checked)
-			skip2s.checked = true;
-		if (!skip3s.checked)
-			skip4s.checked = true;
-		updateSkipWordsOfLength();
-	});
-	skip4s.addEventListener('change', () => {
-		if (skip4s.checked) {
-			skip2s.checked = true;
-			skip3s.checked = true;
-		}
-		updateSkipWordsOfLength();
-	});
-	document.getElementById('submit').addEventListener('click', showSolution);
 	updateBoardSize();
 	for (let row = 0; row < N; row++) {
 		let rowElem = document.createElement('div');
@@ -623,30 +655,31 @@ function startup() {
 		tileElem.dataset.letter = letter;
 		elem.addEventListener('click', () => {
 			if (finished) return;
-			let tileSelected = document.querySelector('.highlight.selected');
-			let className = !tileSelected ? 'placing' :
+			let squareSelected = document.querySelector('.highlight.selected');
+			let className = !squareSelected ? 'placing' :
 				letter === NOTHING ? '__unused' : 'possible';
-			if (tileElem.classList.contains(className)) {
-				tileElem.classList.remove(className);
-				if (tileSelected) {
-					let row = parseInt(tileSelected.dataset.row);
-					let col = parseInt(tileSelected.dataset.col);
-					removeFromGuesses(row, col, letter);
-				}
-			} else {
-				let placing = document.querySelector('.placing');
-				if (placing) placing.classList.remove('placing');
-				tileElem.classList.add(className);
-				if (tileSelected) {
-					let row = parseInt(tileSelected.dataset.row);
-					let col = parseInt(tileSelected.dataset.col);
+			let placing = document.querySelector('.placing');
+			if (placing && placing !== tileElem)
+				placing.classList.remove('placing');
+			tileElem.classList.toggle(className);
+			if (squareSelected) {
+				// toggle letter as possibility for square
+				let row = parseInt(squareSelected.dataset.row);
+				let col = parseInt(squareSelected.dataset.col);
+				if (letter === NOTHING || tileElem.classList.contains('possible'))
 					addToGuesses(row, col, letter);
-				}
+				else
+					removeFromGuesses(row, col, letter);
 			}
 		});
 		selectContainer.appendChild(elem);
 	}
-	loadChallenge('00000');
+	let dayNumber = Math.floor((new Date() - new Date(2025, 9-1, 19)) / (1000 * 60 * 60 * 24));
+	document.getElementById('challenge-num').innerText = dayNumber;
+	let challenge = dayNumber + '';
+	while (challenge.length < 5)
+		challenge = '0' + challenge;
+	loadChallenge(challenge);
 }
 
 window.addEventListener('load', startup);
