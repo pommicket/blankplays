@@ -25,8 +25,7 @@ function updateBoardSize() {
 	boardElem.style.height = boardSize + 'px';
 	let selectContainer = document.getElementById('select-container');
 	selectContainer.style.fontSize = fontSize;
-	selectContainer.style.width = boardSize + 'px';
-	selectContainer.style.height = boardSize / N * 2 + 'px';
+	selectContainer.style.maxWidth = boardSize + 'px';
 }
 
 const DOUBLE_LETTER = 'double-letter';
@@ -79,10 +78,14 @@ function loadAttempt() {
 		// old data
 		return;
 	}
-	for (let row = 0; row < 15; row++) {
-		for (let col = 0; col < 15; col++) {
+	for (let row = 0; row < N; row++) {
+		for (let col = 0; col < N; col++) {
 			for (let letter of saveData.solution[row][col]) {
-				addToSolution(row, col, letter);
+				addToGuesses(row, col, letter);
+			}
+			if (saveData.eliminated && saveData.eliminated[row*N+col]) {
+				document.querySelector(`.highlight[data-row="${row}"][data-col="${col}"]`)
+					.classList.add('nothing');
 			}
 		}
 	}
@@ -91,11 +94,18 @@ function loadAttempt() {
 }
 
 function saveAttempt() {
+	let eliminated = new Array(N*N).fill(false);
+	for (let highlightElem of document.querySelectorAll('.highlight.nothing')) {
+		let row = parseInt(highlightElem.dataset.row);
+		let col = parseInt(highlightElem.dataset.col);
+		eliminated[row*N+col] = true;
+	}
 	let saveData = {
 		version: 1,
 		id: challengeId,
 		solution: currAttempt,
 		finished: finished,
+		eliminated: eliminated,
 	};
 	localStorage.setItem(`attempt-${lexicon}`, JSON.stringify(saveData));
 }
@@ -118,7 +128,7 @@ function updatePossibilities(highlightElem, letters) {
 	possibilitiesElem.style.fontSize = fontSize;
 }
 
-function addToSolution(row, col, letter) {
+function addToGuesses(row, col, letter) {
 	let highlight = document.querySelector(`.highlight[data-row="${row}"][data-col="${col}"]`);
 	if (letter === NOTHING) {
 		currAttempt[row][col] = [];
@@ -136,7 +146,7 @@ function addToSolution(row, col, letter) {
 	saveAttempt();
 }
 
-function removeFromSolution(row, col, letter) {
+function removeFromGuesses(row, col, letter) {
 	let highlight = document.querySelector(`.highlight[data-row="${row}"][data-col="${col}"]`);
 	if (letter === NOTHING) {
 		highlight.classList.remove('nothing');
@@ -150,13 +160,20 @@ function removeFromSolution(row, col, letter) {
 	saveAttempt();
 }
 
-function toggleInSolution(row, col, letter) {
-	let letters = currAttempt[row][col];
-	let idx = letters.indexOf(letter);
-	if (idx === -1) {
-		addToSolution(row, col, letter);
+function toggleInGuesses(row, col, letter) {
+	let currentlyContains;
+	if (letter === NOTHING) {
+		let highlight = document.querySelector(`.highlight[data-row="${row}"][data-col="${col}"]`);
+		currentlyContains = highlight.classList.contains('nothing');
 	} else {
-		removeFromSolution(row, col, letter);
+		let letters = currAttempt[row][col].slice();
+		let idx = letters.indexOf(letter);
+		currentlyContains = idx !== -1;
+	}
+	if (currentlyContains) {
+		removeFromGuesses(row, col, letter);
+	} else {
+		addToGuesses(row, col, letter);
 	}
 }
 
@@ -187,7 +204,7 @@ function putTile(row, col, letter) {
 
 function selectTile(elem, row, col) {
 	deselectTile();
-	document.getElementById('select-container').style.display = 'grid';
+	document.getElementById('select-container').style.display = 'block';
 	let placing = document.querySelector('.tile.placing');
 	if (placing)
 		placing.classList.remove('placing');
@@ -250,7 +267,7 @@ function clickedSquare(highlight, row, col) {
 		if (e.button === 0) {
 			let placing = document.querySelector('.placing');
 			if (placing) {
-				toggleInSolution(row, col, placing.dataset.letter);
+				toggleInGuesses(row, col, placing.dataset.letter);
 			} else if (highlight.classList.contains('selected')) {
 				deselectTile();
 			} else {
@@ -264,6 +281,7 @@ function clickedSquare(highlight, row, col) {
 				highlight.classList.add('nothing');
 				if (highlight.classList.contains('selected'))
 					deselectTile();
+				saveAttempt();
 			}
 			e.preventDefault();
 		}
@@ -300,32 +318,31 @@ Please e-mail ${EMAIL}`);
 Try refreshing the page, or clearing your browser's cache for this site.
 If problem persists, e-mail ${EMAIL}.`);
 	}
-	// TODO : check format & report error if wrong
 	let body = await result.text();
 	let lines = body.split('\n');
 	board = [];
-	for (let row = 0; row < 15; row++) {
+	for (let row = 0; row < N; row++) {
 		board.push([]);
-		for (let col = 0; col < 15; col++) {
+		for (let col = 0; col < N; col++) {
 			board[row].push(lines[row][col]);
 		}
 	}
 	trueSolution = [];
-	for (let row = 0; row < 15; row++) {
+	for (let row = 0; row < N; row++) {
 		trueSolution.push([]);
-		for (let col = 0; col < 15; col++) {
+		for (let col = 0; col < N; col++) {
 			trueSolution[row].push([]);
 		}
 	}
-	for (let i = 15; i < lines.length; i++) {
+	for (let i = N; i < lines.length; i++) {
 		if (!lines[i]) continue;
 		let parts = lines[i].split(' ');
 		let square = parseInt(parts[0], 10);
 		let letter = parts[1];
-		trueSolution[Math.floor(square / 15)][square % 15].push(letter);
+		trueSolution[Math.floor(square / N)][square % N].push(letter);
 	}
-	for (let row = 0; row < 15; row++)
-		for (let col = 0; col < 15; col++)
+	for (let row = 0; row < N; row++)
+		for (let col = 0; col < N; col++)
 			trueSolution[row][col].sort();
 	updateBoard();
 	loadAttempt();
@@ -336,8 +353,8 @@ function updateBoard() {
 	for (let highlight of document.querySelectorAll('.highlight')) {
 		highlight.remove();
 	}
-	for (let row = 0; row < 15; row++) {
-		for (let col = 0; col < 15; col++) {
+	for (let row = 0; row < N; row++) {
+		for (let col = 0; col < N; col++) {
 			let letter = board[row][col];
 			if (letter !== '.') {
 				putTile(row, col, letter);
@@ -387,8 +404,8 @@ function updateSkipWordsOfLength() {
 	let skip4s = document.getElementById('skip-4s');
 	skipWordsOfLength = skip4s.checked ? 4 : skip3s.checked ? 3 : skip2s.checked ? 2 : 1;
 	localStorage.setItem(`skip-${lexicon}`, skipWordsOfLength);
-	for (let row = 0; row < 15; row++) {
-		for (let col = 0; col < 15; col++) {
+	for (let row = 0; row < N; row++) {
+		for (let col = 0; col < N; col++) {
 			if (!includeSquare(row, col)) continue;
 			let tooShort = skipDueToLength(row, col);
 			document.querySelector(`.highlight[data-row="${row}"][data-col="${col}"]`).style.visibility =
@@ -409,8 +426,8 @@ function showSolution() {
 	let correctPlays = 0;
 	let incorrectPlays = 0;
 	let missedPlays = 0;
-	for (let row = 0; row < 15; row++) {
-		for (let col = 0; col < 15; col++) {
+	for (let row = 0; row < N; row++) {
+		for (let col = 0; col < N; col++) {
 			if (!includeSquare(row, col))
 				continue;
 			let guess = currAttempt[row][col];
@@ -465,14 +482,15 @@ function showSolution() {
 		// stop rounding to 100 when not perfect
 		score = Math.min(score, 99);
 	}
+	let statsElem = document.getElementById('stats');
+	statsElem.style.setProperty('--score-color', `hsl(${Math.round(score*120/100)}deg 90% 30%)`);
 	let scoreMeter = document.getElementById('score-meter');
 	scoreMeter.value = score;
-	scoreMeter.style.setProperty('--color', `hsl(${Math.round(score*120/100)}deg 90% 50%)`);
 	document.getElementById('score-span').innerText = score;
 	document.getElementById('correct-plays').innerText = correctPlays;
 	document.getElementById('incorrect-plays').innerText = incorrectPlays;
 	document.getElementById('missed-plays').innerText = missedPlays;
-	document.getElementById('stats').style.display = 'block';
+	statsElem.style.display = 'block';
 	let shareText = `I scored ${score}/100 on today's BlankPlays!`;
 	if (score === 100)
 		shareText += ' 😎';
@@ -516,6 +534,24 @@ function startup() {
 	});
 	document.getElementById('report-issue-button').addEventListener('click', () => {
 		showDialogById('report-issue');
+	});
+	let darkModeButton = document.getElementById('dark-mode');
+	let lightModeButton = document.getElementById('light-mode');
+	if (window.darkMode) // set in inline script
+		darkModeButton.checked = true;
+	else
+		lightModeButton.checked = true;
+	darkModeButton.addEventListener('change', () => {
+		if (darkModeButton.checked) {
+			document.body.classList.add('dark-mode');
+			localStorage.setItem('color-mode', 'dark');
+		}
+	});
+	lightModeButton.addEventListener('change', () => {
+		if (lightModeButton.checked) {
+			document.body.classList.remove('dark-mode');
+			localStorage.setItem('color-mode', 'light');
+		}
 	});
 	let lexiconSelect = document.getElementById('lexicon');
 	lexiconSelect.value = lexicon;
@@ -571,46 +607,40 @@ function startup() {
 	let selectContainer = document.getElementById('select-container');
 	let selections = alphabet.slice();
 	selections.push(NOTHING);
-	for (let tileRow = 0; tileRow * N < selections.length; tileRow++) {
-		let rowContainer = document.createElement('div');
-		rowContainer.classList.add('select-container-row');
-		selectContainer.appendChild(rowContainer);
-		for (let i = tileRow*N; i < (tileRow+1)*N; i++) {
-			if (i >= selections.length) break;
-			let letter = selections[i];
-			let elem = document.createElement('span');
-			elem.classList.add('select-tile-container');
-			if (letter === NOTHING) {
-				elem.id = 'select-nothing';
-			}
-			makeTile(elem, letter, false);
-			let tileElem = elem.querySelector('.tile');
-			tileElem.dataset.letter = letter;
-			elem.addEventListener('click', () => {
-				if (finished) return;
-				let tileSelected = document.querySelector('.highlight.selected');
-				let className = !tileSelected ? 'placing' :
-					letter === NOTHING ? '__unused' : 'possible';
-				if (tileElem.classList.contains(className)) {
-					tileElem.classList.remove(className);
-					if (tileSelected) {
-						let row = parseInt(tileSelected.dataset.row);
-						let col = parseInt(tileSelected.dataset.col);
-						removeFromSolution(row, col, letter);
-					}
-				} else {
-					let placing = document.querySelector('.placing');
-					if (placing) placing.classList.remove('placing');
-					tileElem.classList.add(className);
-					if (tileSelected) {
-						let row = parseInt(tileSelected.dataset.row);
-						let col = parseInt(tileSelected.dataset.col);
-						addToSolution(row, col, letter);
-					}
-				}
-			});
-			rowContainer.appendChild(elem);
+	for (let i = 0; i < selections.length; i++) {
+		let letter = selections[i];
+		let elem = document.createElement('span');
+		elem.classList.add('select-tile-container');
+		if (letter === NOTHING) {
+			elem.id = 'select-nothing';
 		}
+		makeTile(elem, letter, false);
+		let tileElem = elem.querySelector('.tile');
+		tileElem.dataset.letter = letter;
+		elem.addEventListener('click', () => {
+			if (finished) return;
+			let tileSelected = document.querySelector('.highlight.selected');
+			let className = !tileSelected ? 'placing' :
+				letter === NOTHING ? '__unused' : 'possible';
+			if (tileElem.classList.contains(className)) {
+				tileElem.classList.remove(className);
+				if (tileSelected) {
+					let row = parseInt(tileSelected.dataset.row);
+					let col = parseInt(tileSelected.dataset.col);
+					removeFromGuesses(row, col, letter);
+				}
+			} else {
+				let placing = document.querySelector('.placing');
+				if (placing) placing.classList.remove('placing');
+				tileElem.classList.add(className);
+				if (tileSelected) {
+					let row = parseInt(tileSelected.dataset.row);
+					let col = parseInt(tileSelected.dataset.col);
+					addToGuesses(row, col, letter);
+				}
+			}
+		});
+		selectContainer.appendChild(elem);
 	}
 	loadChallenge('00000');
 }

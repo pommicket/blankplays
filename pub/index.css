@@ -1,10 +1,74 @@
 body {
 	font-family: Helvetica, sans-serif;
 	--tile-margin: 5%;
+	--tile-color: #eca;
+	--button-background-color: #eee;
+	--button-outline-color: #333;
+	--hl-nothing-color: #f00;
+	--hl-selected-color: #00f;
+	--hl-border-color: rgba(60,60,60,0.6);
+	--hl-all-correct-color: #0a0;
+	--hl-some-mistakes-color: #f80;
+	--square-color: #dde;
+	--double-letter-color: #acf;
+	--triple-letter-color: #afc;
+	--double-word-color: #fac;
+	--triple-word-color: #c66;
+	--select-tile-border-color: black;
+	--select-tile-possible-color: #8c7;
+	--select-tile-placing-color: #aff;
+	--select-tile-not-possible-color: #d99;
+	--submit-outline-color: #00a;
+	--submit-border-color: #55a;
+	--submit-background-color: #ddf;
+	--submit-hover-color: #bbf;
+	--solution-letter-wrong-color: #800;
+	--solution-letter-correct-color: #060;
+	--solution-letter-missed-color: #00a;
+}
+body.dark-mode {
+	background-color: #112;
+	color: #f8f8f8;
+	--square-color: #445;
+	--tile-color: #520;
+	--button-outline-color: #ccc;
+	--button-background-color: #223;
+	--hl-border-color: rgba(200,200,200,0.4);
+	--hl-selected-color: #0ff;
+	--double-letter-color: #569;
+	--triple-letter-color: #465;
+	--double-word-color: #525;
+	--triple-word-color: #822;
+	--select-tile-border-color: #ccc;
+	--select-tile-possible-color: #272;
+	--select-tile-placing-color: #466;
+	--submit-outline-color: #8fc;
+	--submit-border-color: #5ac;
+	--submit-background-color: #266;
+	--submit-hover-color: #488;
+	--solution-letter-wrong-color: #faa;
+	--solution-letter-correct-color: #afa;
+	--solution-letter-missed-color: #9ff;
+}
+.dark-mode a {
+	color: #afc;
+}
+.dark-mode textarea {
+	background-color: transparent;
+	border: 2px solid #fff;
+	color: inherit;
+}
+button {
+	color: inherit;
+	background-color: var(--button-background-color);
+	outline: 2px solid var(--button-outline-color);
+	border: 0;
+	border-radius: 2px;
+	margin: 6px;
 }
 /* use minimal margins on small screens,
    to maximize available space for board. */
-@media (width < 10cm) {
+@media (width < 15cm) {
 	body {
 		margin: 2px;
 		--tile-margin: 0%;
@@ -21,24 +85,24 @@ body {
 }
 .board-square {
 	margin: 1px;
-	background-color: #dde;
+	background-color: var(--square-color);
 	line-height: 1;
 	position: relative;
 }
 .board-square.double-letter {
-	background-color: #acf;
+	background-color: var(--double-letter-color);
 }
 .board-square.triple-letter {
-	background-color: #afc;
+	background-color: var(--triple-letter-color);
 }
 .board-square.double-word {
-	background-color: #fac;
+	background-color: var(--double-word-color);
 }
 .board-square.triple-word {
-	background-color: #c66;
+	background-color: var(--triple-word-color);
 }
 .tile {
-	background: #eca;
+	background-color: var(--tile-color);
 	position: absolute;
 	width: calc(100% - 2 * var(--tile-margin));
 	height: calc(100% - 2 * var(--tile-margin));
@@ -51,11 +115,10 @@ body {
 	font-weight: bold;
 }
 .blank {
-	color: #333;
 	font-weight: normal;
 }
 .highlight {
-	border: min(0.5vw,0.5vh) solid rgba(60,60,60,0.6);
+	border: 0.5vmin solid var(--hl-border-color);
 	width: 100%;
 	height: 100%;
 	box-sizing: border-box;
@@ -65,17 +128,20 @@ body {
 	justify-content: center;
 	align-items: center;
 }
+input[name=color-mode] {
+	margin-left: 0.5em;
+}
 .highlight.nothing {
-	border-color: #f00;
+	border-color: var(--hl-nothing-color);
 }
 #board .highlight.selected {
-	border-color: #00f;
+	border-color: var(--hl-selected-color);
 }
 .highlight.all-correct {
-	border-color: #0a0;
+	border-color: var(--hl-all-correct-color);
 }
 .highlight.some-mistakes {
-	border-color: #f80;
+	border-color: var(--hl-some-mistakes-color);
 }
 .possibilities {
 	word-break: break-all;
@@ -93,59 +159,56 @@ body {
 	font-size: 30%;
 }
 #select-container {
-	display: grid;
-	grid-template-rows: repeat(2, 1fr);
-}
-.select-container-row {
-	display: grid;
-	grid-template-columns: repeat(15, 1fr);
-	grid-auto-flow: column;
 	width: 100%;
 }
 .select-tile-container {
-	position: relative;
 	cursor: pointer;
-	margin: 2px;
 }
 .select-tile-container .tile {
+	position: static;
+	display: inline-flex;
 	background-color: transparent;
 	font-weight: normal;
-	border: 2px solid black;
+	box-sizing: border-box;
+	border: 0.3vmin solid var(--select-tile-border-color);
+	width: min(1.5cm,10vmin);
+	height: min(1.5cm,10vmin);
+	font-size: min(1.2cm,8vmin);
+	margin: 2px;
 }
 .select-tile-container .tile.possible,
 .select-tile-container .tile.correct {
-	background-color: #8c7;
+	background-color: var(--select-tile-possible-color);
 	font-weight: bold;
-	text-decoration: underline;
+	border-width: 0.6vmin;
 }
 .select-tile-container .tile.missed {
-	background-color: #8c7;
+	background-color: var(--select-tile-possible-color);
 }
 .select-tile-container .tile.not-possible {
-	background-color: #c88;
+	background-color: var(--select-tile-not-possible-color);
 }
 .select-tile-container .tile.wrong {
-	background-color: #c88;
+	background-color: var(--select-tile-not-possible-color);
 	font-weight: bold;
-	text-decoration: underline;
+	border-width: 0.6vmin;
 }
 .select-tile-container .tile.placing {
-	background-color: #88c;
+	background-color: var(--select-tile-placing-color);
 	font-weight: bold;
-	text-decoration: underline;
 }
 #submit {
 	outline: 0;
-	border: 2px solid #44a;
-	outline: 2px solid #00a;
-	box-shadow: 2px 2px 4px #00a;
-	margin: 4px;
+	border: 2px solid var(--submit-border-color);
+	outline: 2px solid var(--submit-outline-color);
+	box-shadow: 2px 2px 4px var(--submit-outline-color);
+	margin-bottom: 1.5em;
 	border-radius: 5px;
-	padding: 2px 5px;
-	background: #ddf;
+	padding: 4px 8px;
+	background: var(--submit-background-color);
 }
 #submit:hover {
-	background: #bbf;
+	background: var(--submit-hover-color);
 }
 #submit:active {
 	transform: translate(2px, 2px);
@@ -154,18 +217,13 @@ body {
 .solution-letter.wrong {
 	text-decoration: line-through;
 	font-weight: bold;
-	color: #800;
-}
-.solution-letter.wrong {
-	text-decoration: line-through;
-	font-weight: bold;
-	color: #800;
+	color: var(--solution-letter-wrong-color);
 }
 .solution-letter.correct {
-	color: #060;
+	color: var(--solution-letter-correct-color);
 }
 .solution-letter.missed {
-	color: #00a;
+	color: var(--solution-letter-missed-color);
 	font-weight: bold;
 }
 /* all browsers which support grid should support
@@ -175,9 +233,13 @@ body {
 		display: none;
 	}
 }
-progress#score-meter::-moz-progress-bar { background: var(--color); }
-progress#score-meter::-webkit-progress-value { background: var(--color); }
-progress#score-meter { color: var(--color); }
+progress#score-meter::-moz-progress-bar { background: var(--score-color); }
+progress#score-meter::-webkit-progress-value { background: var(--score-color); }
+progress#score-meter { color: var(--score-color); }
+#score-ratio {
+	color: var(--score-color);
+	font-weight: bold;
+}
 h2, h3 {
 	margin: 2px;
 }
@@ -187,10 +249,13 @@ h2, h3 {
 	line-height: 1;
 }
 dialog {
-	max-width: 50em;
+	max-width: min(50em,80%);
+	/* weirdness for the sake of old browsers (with no <dialog>) */
 	display: none;
 }
 dialog[open] {
-	max-width: 50em;
 	display: block;
+}
+textarea {
+	max-width: 90%;
 }

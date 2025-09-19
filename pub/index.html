@@ -9,6 +9,15 @@
 		<script src="/blankplays.js" async></script>
 	</head>
 	<body>
+		<script blocking="render">
+			// this is a separate inline script to prevent a
+			// light-mode flash when loading the page
+			window.darkMode = localStorage.getItem('color-mode') === 'dark'
+				|| (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+			if (window.darkMode) {
+				document.body.classList.add('dark-mode');
+			}
+		</script>
 		<noscript>
 			<b>You must enable JavaScript in your browser to do these puzzles.</b><br>
 		</noscript>
@@ -31,6 +40,8 @@
 		<label><input type="checkbox" id="skip-2s"> Skip 2’s</label>
 		<label><input type="checkbox" id="skip-3s"> Skip 3’s</label>
 		<label><input type="checkbox" id="skip-4s"> Skip 4’s</label>
+		<label><input type="radio" name="color-mode" id="light-mode">☀️ Light</label>
+		<label><input type="radio" name="color-mode" id="dark-mode">🌙 Dark</label>
 		<button id="submit">All done!</button>
 		<div id="board"></div>
 		<div id="select-heading" style="display: none;">
@@ -42,7 +53,7 @@
 		<div id="select-container"></div>
 		<div id="stats" style="display:none;">
 			Score: <progress id="score-meter" max="100"></progress>
-				<span id="score-span"></span>/100<br>
+				<span id="score-ratio"><span id="score-span"></span>/100</span><br>
 			Correct plays identified: <span id="correct-plays"></span><br>
 			Incorrect plays guessed: <span id="incorrect-plays"></span><br>
 			Missed plays: <span id="missed-plays"></span><br>
