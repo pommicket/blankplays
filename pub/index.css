@@ -263,3 +263,9 @@ dialog[open] {
 textarea {
 	max-width: 90%;
 }
+#past-container {
+	margin: 1em 0;
+}
+ul {
+	margin: 2px;
+}

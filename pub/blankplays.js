@@ -5,7 +5,8 @@ const N = 15; // board size
 const NOTHING = "∅";
 const EMAIL = 'pommicket' + '@pommicket.com';
 
-let lexicon = new URL(location.href).searchParams.get('lexicon')
+let searchParams = new URL(location.href).searchParams;
+let lexicon = searchParams.get('lexicon')
 	|| localStorage.getItem('prevLexicon') || 'nwl23';
 localStorage.setItem('prevLexicon', lexicon);
 
@@ -65,49 +66,53 @@ let boardSquareElems = [];
 let currAttempt = [];
 let board = [];
 let trueSolution = [];
-let skipWordsOfLength = parseInt(localStorage.getItem(`skip-${lexicon}`)) || 2;
+let skipWordsOfLength;
 let alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 let finished = false;
 let challengeId;
 
 function loadAttempt() {
-	let saveDataStr = localStorage.getItem(`attempt-${lexicon}`);
-	if (!saveDataStr) return null;
+	let saveDataStr = localStorage.getItem(`attempt-${lexicon}-${challengeId}`);
+	if (!saveDataStr) return;
 	let saveData = JSON.parse(saveDataStr);
-	if (saveData.id !== challengeId) {
-		// old data
-		return;
-	}
+	let solution = saveData.solution.split(';');
 	for (let row = 0; row < N; row++) {
 		for (let col = 0; col < N; col++) {
-			for (let letter of saveData.solution[row][col]) {
+			for (let letter of solution[row*N+col].split(',')) {
+				if (!letter) continue;
 				addToGuesses(row, col, letter);
 			}
-			if (saveData.eliminated && saveData.eliminated[row*N+col]) {
+			if (saveData.eliminated && saveData.eliminated[row*N+col] === 'Y') {
 				document.querySelector(`.highlight[data-row="${row}"][data-col="${col}"]`)
 					.classList.add('nothing');
 			}
 		}
 	}
+	setSkipWordsOfLength(saveData.skip);
 	if (saveData.finished)
 		showSolution();
 }
 
 function saveAttempt() {
-	let eliminated = new Array(N*N).fill(false);
+	let eliminated = new Array(N*N).fill('N');
 	for (let highlightElem of document.querySelectorAll('.highlight.nothing')) {
 		let row = parseInt(highlightElem.dataset.row);
 		let col = parseInt(highlightElem.dataset.col);
-		eliminated[row*N+col] = true;
+		eliminated[row*N+col] = 'Y';
 	}
+	let solution = [];
+	for (let row = 0; row < N; row++)
+		for (let col = 0; col < N; col++)
+			solution.push(currAttempt[row][col].join(','));
 	let saveData = {
 		version: 1,
-		id: challengeId,
-		solution: currAttempt,
+		solution: solution.join(';'),
 		finished: finished,
-		eliminated: eliminated,
+		eliminated: eliminated.join(''),
+		skip: skipWordsOfLength
 	};
-	localStorage.setItem(`attempt-${lexicon}`, JSON.stringify(saveData));
+	console.log(saveData);
+	localStorage.setItem(`attempt-${lexicon}-${challengeId}`, JSON.stringify(saveData));
 }
 
 function getFontSizeForPossibilities(n) {
@@ -135,7 +140,6 @@ function addToGuesses(row, col, letter) {
 		highlight.classList.add('nothing');
 		updatePossibilities(highlight, []);
 		deselectTile();
-		saveAttempt();
 		return;
 	}
 	let letters = currAttempt[row][col];
@@ -144,14 +148,12 @@ function addToGuesses(row, col, letter) {
 	letters.sort();
 	highlight.classList.remove('nothing');
 	updatePossibilities(highlight, letters);
-	saveAttempt();
 }
 
 function removeFromGuesses(row, col, letter) {
 	let highlight = document.querySelector(`.highlight[data-row="${row}"][data-col="${col}"]`);
 	if (letter === NOTHING) {
 		highlight.classList.remove('nothing');
-		saveAttempt();
 		return;
 	}
 	let letters = currAttempt[row][col];
@@ -159,7 +161,6 @@ function removeFromGuesses(row, col, letter) {
 	if (idx === -1) return;
 	letters.splice(idx, 1);
 	updatePossibilities(highlight, letters);
-	saveAttempt();
 }
 
 function toggleInGuesses(row, col, letter) {
@@ -270,6 +271,7 @@ function clickedSquare(highlight, row, col) {
 			let placing = document.querySelector('.placing');
 			if (placing) {
 				toggleInGuesses(row, col, placing.dataset.letter);
+				saveAttempt();
 			} else if (highlight.classList.contains('selected')) {
 				deselectTile();
 			} else {
@@ -351,31 +353,31 @@ If problem persists, e-mail ${EMAIL}.`);
 	let skip2s = document.getElementById('skip-2s');
 	let skip3s = document.getElementById('skip-3s');
 	let skip4s = document.getElementById('skip-4s');
-	skip2s.checked = skipWordsOfLength >= 2;
-	skip3s.checked = skipWordsOfLength >= 3;
-	skip4s.checked = skipWordsOfLength >= 4;
 	skip2s.addEventListener('change', () => {
 		if (!skip2s.checked) {
 			skip3s.checked = false;
 			skip4s.checked = false;
 		}
-		updateSkipWordsOfLength();
+		setSkipWordsOfLength();
+		saveAttempt();
 	});
 	skip3s.addEventListener('change', () => {
 		if (skip3s.checked)
 			skip2s.checked = true;
 		if (!skip3s.checked)
 			skip4s.checked = false;
-		updateSkipWordsOfLength();
+		setSkipWordsOfLength();
+		saveAttempt();
 	});
 	skip4s.addEventListener('change', () => {
 		if (skip4s.checked) {
 			skip2s.checked = true;
 			skip3s.checked = true;
 		}
-		updateSkipWordsOfLength();
+		setSkipWordsOfLength();
+		saveAttempt();
 	});
-	updateSkipWordsOfLength();
+	setSkipWordsOfLength(parseInt(localStorage.getItem(`skip-${lexicon}`)) || 2);
 	document.getElementById('submit')
 		.addEventListener('click', showSolution);
 	window.addEventListener('keydown', (e) => {
@@ -401,6 +403,7 @@ If problem persists, e-mail ${EMAIL}.`);
 			toggleInGuesses(row, col, letter);
 			if (letter !== NOTHING)
 				tile.classList.toggle('possible');
+			saveAttempt();
 		} else {
 			if (placing && placing !== tile) placing.classList.remove('placing');
 			tile.classList.toggle('placing');
@@ -457,11 +460,14 @@ function skipDueToLength(row, col) {
 	return Math.max(horizontalWordLen, verticalWordLen) <= skipWordsOfLength;
 }
 
-function updateSkipWordsOfLength() {
+function setSkipWordsOfLength(newVal) {
 	let skip2s = document.getElementById('skip-2s');
 	let skip3s = document.getElementById('skip-3s');
 	let skip4s = document.getElementById('skip-4s');
-	skipWordsOfLength = skip4s.checked ? 4 : skip3s.checked ? 3 : skip2s.checked ? 2 : 1;
+	skipWordsOfLength = newVal || (skip4s.checked ? 4 : skip3s.checked ? 3 : skip2s.checked ? 2 : 1);
+	skip2s.checked = skipWordsOfLength >= 2;
+	skip3s.checked = skipWordsOfLength >= 3;
+	skip4s.checked = skipWordsOfLength >= 4;
 	if (!finished)
 		localStorage.setItem(`skip-${lexicon}`, skipWordsOfLength);
 	for (let row = 0; row < N; row++) {
@@ -557,7 +563,7 @@ function showSolution() {
 		shareText += ' 😎';
 	else
 		shareText += '\nCan you do better?';
-	shareText += `\nhttps://blankplays.pommicket.com?lexicon=${lexicon}`;
+	shareText += `\nhttps://blankplays.pommicket.com?lexicon=${lexicon}&challenge=${challengeId}`;
 	let shareElem = document.getElementById('share');
 	shareElem.value = shareText;
 	let shareCopyButton = document.getElementById('share-copy');
@@ -671,15 +677,33 @@ async function startup() {
 					addToGuesses(row, col, letter);
 				else
 					removeFromGuesses(row, col, letter);
+				saveAttempt();
 			}
 		});
 		selectContainer.appendChild(elem);
 	}
-	let dayNumber = Math.floor((new Date() - new Date(2025, 9-1, 19)) / (1000 * 60 * 60 * 24));
-	document.getElementById('challenge-num').innerText = dayNumber;
-	let challenge = dayNumber + '';
+	const DAY0 = new Date(2025, 9-1, 19);
+	let dayNumber = Math.floor((new Date() - DAY0) / (1000 * 60 * 60 * 24));
+	let challenge = searchParams.get('challenge') || (dayNumber + '');
+	if (challenge !== dayNumber + '') {
+		let today = document.getElementById('today');
+		today.innerText = "or do today's challenge instead.";
+		today.href = '?challenge=' + dayNumber;
+	}
+	document.getElementById('challenge-num').innerText = challenge;
 	while (challenge.length < 5)
 		challenge = '0' + challenge;
+	// links to past challenges
+	let past = document.getElementById('past');
+	for (let day = 0; day < dayNumber; day++) {
+		let li = document.createElement('li');
+		let link = document.createElement('a');
+		li.appendChild(link);
+		let date = new Date(DAY0.getTime() + 1000 * 60 * 60 * 24 * day);
+		link.innerText = `Challenge #${day} (${date.toISOString().substring(0,10)})`;
+		link.href = `?challenge=${day}`;
+		past.appendChild(li);
+	}
 	loadChallenge(challenge);
 }
 

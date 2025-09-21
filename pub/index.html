@@ -5,8 +5,8 @@
 		<meta content="width=device-width,initial-scale=1" name="viewport">
 		<title>BlankPlays</title>
 		<link rel="icon" href="/icon.png">
-		<link rel="stylesheet" href="/index.css">
-		<script src="/blankplays.js?v=3" id="main-script" async></script>
+		<link rel="stylesheet" href="/index.css?v=1">
+		<script src="/blankplays.js?v=4" id="main-script" async></script>
 	</head>
 	<body>
 		<script blocking="render">
@@ -32,7 +32,7 @@
 			<a href="#" id="how-to-play-button">How to Play</a>
 		</div>
 		<h2>BlankPlays</h2>
-		Find all possible plays with a single blank! Daily challenge #<span id="challenge-num">(loading)</span><br>
+		Find all possible plays with a single blank! Daily challenge #<span id="challenge-num">(loading)</span> <a href="#" id="today"></a><br>
 		<label>Lexicon: <select id="lexicon">
 			<option value="nwl23">🇨🇦🇺🇸NWL23</option>
 			<option value="csw24">🇬🇧 CSW24</option>
@@ -61,7 +61,10 @@
 			<button id="share-copy">Copy to clipboard</button>
 		</div>
 
-
+		<div id="past-container">
+			<b>Past challenges:</b>
+			<ul id="past"></ul>
+		</div>
 
 		<dialog id="how-to-play">
 			<h3>How to Play</h3>
