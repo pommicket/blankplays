@@ -75,6 +75,9 @@ function loadAttempt() {
 	let saveDataStr = localStorage.getItem(`attempt-${lexicon}-${challengeId}`);
 	if (!saveDataStr) return;
 	let saveData = JSON.parse(saveDataStr);
+	if (saveData.version !== 2) {
+		return;
+	}
 	let solution = saveData.solution.split(';');
 	for (let row = 0; row < N; row++) {
 		for (let col = 0; col < N; col++) {
@@ -105,7 +108,7 @@ function saveAttempt() {
 		for (let col = 0; col < N; col++)
 			solution.push(currAttempt[row][col].join(','));
 	let saveData = {
-		version: 1,
+		version: 2,
 		solution: solution.join(';'),
 		finished: finished,
 		eliminated: eliminated.join(''),
