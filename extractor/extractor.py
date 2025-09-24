@@ -4,7 +4,7 @@ import sys
 import os
 import shutil
 import argparse
-import os
+
 pid = os.getpid()
 
 parser = argparse.ArgumentParser(description='''BlankPlays challenge extractor.
