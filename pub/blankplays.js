@@ -114,7 +114,6 @@ function saveAttempt() {
 		eliminated: eliminated.join(''),
 		skip: skipWordsOfLength
 	};
-	console.log(saveData);
 	localStorage.setItem(`attempt-${lexicon}-${challengeId}`, JSON.stringify(saveData));
 }
 
